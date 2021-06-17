@@ -1,0 +1,10 @@
+__pycache__
+*mat
+.vscode/
+.idea/
+.DS_Store
+temp.py
+*.pkl
+checkpoint/
+log/
+data/
