@@ -8,3 +8,4 @@ temp.py
 checkpoint/
 log/
 data/
+CIFAR100_data/

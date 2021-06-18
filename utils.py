@@ -15,4 +15,7 @@ def sigmoid(x):
 
 def softmax(x):
     exp_x = np.exp(x)
-    return exp_x / np.sum(exp_x)
+    sum_list = np.sum(exp_x, axis=1)
+    for i in range(x.shape[0]):
+        exp_x[i, :] /= sum_list[i]
+    return exp_x

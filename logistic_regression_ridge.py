@@ -33,7 +33,7 @@ class PackedLogisticRegressionRidge:
 
     def save_models(self):
         data = []
-        path = f"../checkpoint/{self.model_type}.pth"
+        path = f"./checkpoint/{self.model_type}.pth"
         for i in range(self.categories):
             data.append({
                 "w": self.models[i].w,
@@ -41,7 +41,7 @@ class PackedLogisticRegressionRidge:
         pickle.dump(data, open(path, 'wb'))
 
     def load_models(self):
-        path = f"../checkpoint/{self.model_type}.pth"
+        path = f"./checkpoint/{self.model_type}.pth"
         data = pickle.load(open(path, 'rb'))
         for i in range(self.categories):
             self.models[i].w = data[i]['w']
@@ -88,7 +88,7 @@ class PackedLogisticRegressionRidge:
 
     def save_loss_acc(self):
         loss_acc = zip(self.loss_list, self.acc_list)
-        dirname = "../log"
+        dirname = "./log"
         filename = f"{self.model_type}" + time.strftime("%Y%m%d-%H%M%S")
         path = os.path.join(dirname, filename)
         f = open(path, 'w')
@@ -130,10 +130,10 @@ class LogisticRegressionRidge:
 
 
 if __name__ == "__main__":
-    X_train, y_train, X_test, y_test = load_data(path="../data/preprocessed_data_1764.pkl", reload=True)
+    X_train, y_train, X_test, y_test = load_data(path="./data/preprocessed_data_1764.pkl", reload=True)
     print(X_train.shape)
     packed_model = PackedLogisticRegressionRidge(X_train, y_train, X_test, y_test, categories=10, print_nums=100)
     # packed_model.load_models()
-    packed_model.run(epochs=300, lr=0.1)
+    packed_model.run(epochs=300, lr=0.01)
 
     print(f"Test accuracy: {packed_model.acc_list[-1]}")

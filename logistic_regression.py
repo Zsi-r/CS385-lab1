@@ -4,10 +4,10 @@ from preprocess import load_data
 from utils import *
 
 
-class PackedLogisticRegressionLasso:
+class PackedLogisticRegression:
 
     def __init__(self, X_train, y_train, X_test, y_test, categories, print_nums=20):
-        self.model_type = "lasso"
+        self.model_type = "logistic_regression"
         self.print_nums = print_nums
         self.n_train_samples, self.n_features = X_train.shape
         self.categories = categories
@@ -17,7 +17,7 @@ class PackedLogisticRegressionLasso:
         self.X_test = X_test
         self.y_test = y_test
 
-        self.models = [LogisticRegressionLasso(i, X_train.shape[1]) for i in
+        self.models = [LogisticRegression(i, X_train.shape[1]) for i in
                        range(self.categories)]
 
         self.loss_list = []
@@ -33,7 +33,7 @@ class PackedLogisticRegressionLasso:
 
     def save_models(self):
         data = []
-        path = f"../checkpoint/{self.model_type}.pth"
+        path = f"./checkpoint/{self.model_type}.pth"
         for i in range(self.categories):
             data.append({
                 "w": self.models[i].w,
@@ -41,7 +41,7 @@ class PackedLogisticRegressionLasso:
         pickle.dump(data, open(path, 'wb'))
 
     def load_models(self):
-        path = f"../checkpoint/{self.model_type}.pth"
+        path = f"./checkpoint/{self.model_type}.pth"
         data = pickle.load(open(path, 'rb'))
         for i in range(self.categories):
             self.models[i].w = data[i]['w']
@@ -51,7 +51,7 @@ class PackedLogisticRegressionLasso:
         for i in range(epochs):
             loss = self.train(epochs, batch_size, lr)
             acc = self.predict()
-            if i % (epochs / self.print_nums) == 0:
+            if i % (epochs/self.print_nums) == 0:
                 print(f"Epoch {i}, loss: {loss}, acc: {acc}")
             self.loss_list.append(loss)
             self.acc_list.append(acc)
@@ -70,7 +70,7 @@ class PackedLogisticRegressionLasso:
             for k in range(self.categories):
                 loss += self.models[k].train(self.X_train[left_bound:right_bound, :],
                                              self.y_in_each_model[k][left_bound:right_bound, :],
-                                             lr=lr, lambda_penalty=0.5)
+                                             lr)
             loss /= self.categories
             total_loss += loss
         total_loss /= batch_nums
@@ -88,7 +88,7 @@ class PackedLogisticRegressionLasso:
 
     def save_loss_acc(self):
         loss_acc = zip(self.loss_list, self.acc_list)
-        dirname = "../log"
+        dirname = "./log"
         filename = f"{self.model_type}" + time.strftime("%Y%m%d-%H%M%S")
         path = os.path.join(dirname, filename)
         f = open(path, 'w')
@@ -98,7 +98,7 @@ class PackedLogisticRegressionLasso:
         f.close()
 
 
-class LogisticRegressionLasso:
+class LogisticRegression:
 
     def __init__(self, model_idx, n_features):
         self.model_idx = model_idx
@@ -106,19 +106,19 @@ class LogisticRegressionLasso:
 
         self.w = np.zeros((n_features + 1, 1))
 
-    def train(self, X, y, lr=0.1, lambda_penalty=0.5):
+    def train(self, X, y, lr=0.1):
         X = np.insert(X, 0, 1, axis=1)
 
         n_samples = X_train.shape[0]
         y_hat = sigmoid(np.dot(X, self.w))
 
         # print(f"Epoch: {i}, loss: {float(loss)}")
-        penalty_item = np.where(self.w > 0, 1, -1)
-        dw = (1.0 / n_samples) * (np.dot(X.T, (y_hat - y)) + lambda_penalty * penalty_item)
+        dw = (1.0 / n_samples) * np.dot(X.T, (y_hat - y))
         self.w -= lr * dw
 
-        loss = (1 / n_samples) * (np.sum(
-            np.power(y - y_hat, 2)) + lambda_penalty * np.sum(np.abs(self.w)))  # MSE loss with penalty
+        loss = (1 / n_samples) * np.sum(np.power(y - y_hat, 2))  # MSE loss
+        # loss = (-1.0 / n_samples) * (
+        #         np.dot(y.T, np.log(y_hat)) + np.dot(1 - y.T, np.log(1 - y_hat)))  # cross-entropy loss
         return loss
 
     def predict(self, X):
@@ -131,10 +131,14 @@ class LogisticRegressionLasso:
 
 
 if __name__ == "__main__":
-    X_train, y_train, X_test, y_test = load_data(path="../data/preprocessed_data_1764.pkl", reload=True)
+    X_train, y_train, X_test, y_test = load_data(path="./data/preprocessed_data_1764.pkl", reload=True)
     print(X_train.shape)
-    packed_model = PackedLogisticRegressionLasso(X_train, y_train, X_test, y_test, categories=10, print_nums=100)
+    packed_model = PackedLogisticRegression(X_train, y_train, X_test, y_test, categories=10, print_nums=100)
     # packed_model.load_models()
-    packed_model.run(epochs=300, lr=0.1)
+    packed_model.run(epochs=300, lr=0.01)
 
     print(f"Test accuracy: {packed_model.acc_list[-1]}")
+
+'''
+    acc=0.748040872771973, epoch=2000, lr=0.01, features=1764
+'''

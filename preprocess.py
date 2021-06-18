@@ -5,7 +5,7 @@ from skimage.feature import hog
 import pickle
 
 
-def load_data(path="../data/preprocessed_data.pkl", reload=True):
+def load_data(path="./data/preprocessed_data.pkl", reload=True):
     if reload:
         data = pickle.load(open(path, 'rb'))
         X_train = data['X_train']
@@ -13,8 +13,8 @@ def load_data(path="../data/preprocessed_data.pkl", reload=True):
         X_test = data['X_test']
         y_test = data['y_test']
     else:
-        X_train, y_train = preprocess("../data/train_32x32.mat")
-        X_test, y_test = preprocess("../data/test_32x32.mat")
+        X_train, y_train = preprocess("./data/train_32x32.mat")
+        X_test, y_test = preprocess("./data/test_32x32.mat")
         pickle.dump({"X_train": X_train,
                      "y_train": y_train,
                      "X_test": X_test,
