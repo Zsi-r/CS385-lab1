@@ -25,7 +25,7 @@ class PackedLDA:
 
     def save_models(self):
         data = []
-        path = f"../checkpoint/{self.model_type}.pth"
+        path = f"./checkpoint/{self.model_type}.pth"
         for i in range(self.categories):
             data.append({
                 "w": self.models[i].w,
@@ -33,7 +33,7 @@ class PackedLDA:
         pickle.dump(data, open(path, 'wb'))
 
     def load_models(self):
-        path = f"../checkpoint/{self.model_type}.pth"
+        path = f"./checkpoint/{self.model_type}.pth"
         data = pickle.load(open(path, 'rb'))
         for i in range(self.categories):
             self.models[i].w = data[i]['w']
@@ -63,7 +63,7 @@ class PackedLDA:
         save_loss_list = np.array(save_loss_list)
         save_loss_list = np.mean(save_loss_list, axis=0)
 
-        dirname = "../log"
+        dirname = "./log"
         filename = f"{self.model_type}_" + time.strftime("%Y%m%d-%H%M%S")
         path = os.path.join(dirname, filename)
         f = open(path, 'w')
@@ -163,7 +163,7 @@ class LDA:
 
 
 if __name__ == "__main__":
-    X_train, y_train, X_test, y_test = load_data(path="../data/preprocessed_data.pkl", reload=True)
+    X_train, y_train, X_test, y_test = load_data(path="./data/preprocessed_data_1764.pkl", reload=True)
 
     packed_model = PackedLDA(X_train, y_train, X_test, categories=10)
     # packed_model.load_models()

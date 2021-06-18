@@ -8,6 +8,9 @@ from torchvision.datasets import CIFAR100, SVHN
 from torch.nn import functional as F
 from torch.autograd import Variable
 
+from pytorch_grad_cam import GradCAM, ScoreCAM
+from pytorch_grad_cam.utils.image import show_cam_on_image
+
 from PIL import Image
 import numpy as np
 import time
@@ -15,12 +18,18 @@ from scipy.io import loadmat
 import matplotlib.pyplot as plt
 import os
 
+LOAD = True
 LR = 0.01
-EPOCH = 2
+EPOCH = 5
 BATCH_SIZE = 128
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 DATA_PATH = "./data"
+save_path = "./checkpoint/cnn.pth"
 print(f"Device: {DEVICE}")
+
+global_epoch = EPOCH
+global_lr = LR
+global_batchsize = BATCH_SIZE
 
 class CNN(nn.Module):
     def __init__(self, categories=10):
@@ -107,69 +116,85 @@ if __name__ == "__main__":
     train_num = len(dataset_train)
     val_num = len(dataset_test)
 
-    print("Start training")
-    for epoch in range(EPOCH):
-        net.train()  # 训练过程中开启 Dropout
-        epoch_loss = 0.0  # 每个 epoch 都会对 running_loss 清零
-        for step, data in enumerate(train_loader, start=0):  # 遍历训练集，step从0开始计算
-            images, labels = data  # 获取训练集的图像和标签
-            optimizer.zero_grad()  # 清除历史梯度
+    if LOAD:
+        net.load_state_dict(torch.load(save_path))
+    else:
+        print("Start training")
+        for epoch in range(EPOCH):
+            net.train()  # 训练过程中开启 Dropout
+            epoch_loss = 0.0  # 每个 epoch 都会对 running_loss 清零
+            for step, data in enumerate(train_loader, start=0):  # 遍历训练集，step从0开始计算
+                images, labels = data  # 获取训练集的图像和标签
+                optimizer.zero_grad()  # 清除历史梯度
 
-            outputs = net(images.to(DEVICE))  # 正向传播
-            loss = loss_func(outputs, labels.to(DEVICE))  # 计算损失
-            loss.backward()  # 反向传播
-            optimizer.step()  # 优化器更新参数
-            epoch_loss += loss.item()
+                outputs = net(images.to(DEVICE))  # 正向传播
+                loss = loss_func(outputs, labels.to(DEVICE))  # 计算损失
+                loss.backward()  # 反向传播
+                optimizer.step()  # 优化器更新参数
+                epoch_loss += loss.item()
 
-            # 打印训练进度（使训练过程可视化）
-            rate = (step + 1) / len(train_loader)  # 当前进度 = 当前step / 训练一轮epoch所需总step
-            a = "*" * int(rate * 50)
-            b = "." * int((1 - rate) * 50)
-            print("\rtrain loss: {:^3.0f}%[{}->{}]{:.3f}".format(int(rate * 100), a, b, loss), end="")
-        epoch_loss /= len(train_loader)
-        loss_list.append(epoch_loss)
+                # 打印训练进度（使训练过程可视化）
+                rate = (step + 1) / len(train_loader)  # 当前进度 = 当前step / 训练一轮epoch所需总step
+                a = "*" * int(rate * 50)
+                b = "." * int((1 - rate) * 50)
+                print("\rtrain loss: {:^3.0f}%[{}->{}]{:.3f}".format(int(rate * 100), a, b, loss), end="")
+            epoch_loss /= len(train_loader)
+            loss_list.append(epoch_loss)
 
-        ########################################## validate ###############################################
-        net.eval()  # 验证过程中关闭 Dropout
-        acc = 0.0
-        with torch.no_grad():
-            for val_data in test_loader:
-                val_images, val_labels = val_data
-                # print(val_labels)
-                # print("mark1")
-                outputs = net(val_images.to(DEVICE))
-                # print(f"-----{outputs.shape}")
-                # print(outputs)
-                # print("mark2")
-                predict_y = torch.max(outputs, dim=1)[1]  # 以output中值最大位置对应的索引（标签）作为预测输出
-                acc += (predict_y == val_labels.to(DEVICE)).sum().item()
-            val_accurate = acc / val_num
-            acc_list.append(val_accurate)
-            # # 保存准确率最高的那次网络参数
-            # if val_accurate > best_acc:
-            #     best_acc = val_accurate
-            #     torch.save(net.state_dict(), save_path)
-            print()
-            print('[epoch %d] train_loss: %.3f  test_accuracy: %.3f \n' %
-                  (epoch + 1, epoch_loss, val_accurate))
-    print('Finished Training')
+            ########################################## validate ###############################################
+            net.eval()  # 验证过程中关闭 Dropout
+            acc = 0.0
+            with torch.no_grad():
+                for val_data in test_loader:
+                    val_images, val_labels = val_data
+                    # print(val_labels)
+                    # print("mark1")
+                    outputs = net(val_images.to(DEVICE))
+                    # print(f"-----{outputs.shape}")
+                    # print(outputs)
+                    # print("mark2")
+                    predict_y = torch.max(outputs, dim=1)[1]  # 以output中值最大位置对应的索引（标签）作为预测输出
+                    acc += (predict_y == val_labels.to(DEVICE)).sum().item()
+                val_accurate = acc / val_num
+                acc_list.append(val_accurate)
+                print()
+                print('[epoch %d] train_loss: %.3f  test_accuracy: %.3f \n' %
+                    (epoch + 1, epoch_loss, val_accurate))
+        print('Finished Training')
+        torch.save(net.state_dict(), save_path)
+    
+        loss_acc = zip(loss_list, acc_list)
+        dirname = "./log"
+        filename = f"cnn_{global_lr}_{global_batchsize}_{global_epoch}_" + time.strftime("%Y%m%d-%H%M%S")
+        path = os.path.join(dirname, filename)
+        f = open(path, 'w')
+        f.write("epoch,loss,acc\n")
+        for i, value in enumerate(loss_acc):
+            f.write(f"{i},{value[0]},{value[1]}\n")
+        f.close()
 
-
-    loss_acc = zip(loss_list, acc_list)
-    dirname = "../log"
-    filename = f"cnn" + time.strftime("%Y%m%d-%H%M%S")
-    path = os.path.join(dirname, filename)
-    f = open(path, 'w')
-    f.write("epoch,loss,acc\n")
-    for i, value in enumerate(loss_acc):
-        f.write(f"{i},{value[0]},{value[1]}\n")
-    f.close()
+    # 可视化
+    target_layer = net.fc4
+    input_tensor, target_category = test_loader[0]
+    cam = GradCAM(model=net, target_layer=target_layer, use_cuda=(DEVICE=='cuda'))
+    grayscale_cam = cam(input_tensor=input_tensor, target_category=target_category)
+    grayscale_cam = grayscale_cam[0, :]
+    visualization = show_cam_on_image(input_tensor.numpy(), grayscale_cam)
 
     # 打印训练过程中的loss变化情况
 
+    # epoch_list = list(range(EPOCH))
     # fig = plt.figure()
-    # plt.plot(train_counter, train_losses, color='blue')
+    # plt.plot(epoch_list, loss_list, color='blue')
     # plt.legend('Train Loss', loc='upper right')
-    # plt.xlabel('number of training examples')
-    # plt.ylabel('loss')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Training Loss')
+    # plt.savefig("./cnn_loss")
+    # plt.show()
+    # fig2 = plt.figure()
+    # plt.plot(epoch_list, acc_list, color='red')
+    # plt.legend('Train Loss', loc='upper right')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Testing Accuracy')
+    # plt.savefig("./cnn_acc")
     # plt.show()

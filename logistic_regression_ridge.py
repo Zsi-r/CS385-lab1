@@ -3,6 +3,11 @@ import pickle
 from preprocess import load_data
 from utils import *
 
+global_feature_num = 1764
+global_feature_num = 324
+global_epoch = 300
+global_lr = 0.1
+global_batchsize = 10000
 
 class PackedLogisticRegressionRidge:
 
@@ -89,7 +94,7 @@ class PackedLogisticRegressionRidge:
     def save_loss_acc(self):
         loss_acc = zip(self.loss_list, self.acc_list)
         dirname = "./log"
-        filename = f"{self.model_type}" + time.strftime("%Y%m%d-%H%M%S")
+        filename = f"{self.model_type}_{global_feature_num}_{global_lr}_{global_batchsize}_{global_epoch}_" + time.strftime("%Y%m%d-%H%M%S")
         path = os.path.join(dirname, filename)
         f = open(path, 'w')
         f.write("epoch,loss,acc\n")
@@ -130,10 +135,10 @@ class LogisticRegressionRidge:
 
 
 if __name__ == "__main__":
-    X_train, y_train, X_test, y_test = load_data(path="./data/preprocessed_data_1764.pkl", reload=True)
+    X_train, y_train, X_test, y_test = load_data(path=f"./data/preprocessed_data_{global_feature_num}.pkl", reload=True)
     print(X_train.shape)
     packed_model = PackedLogisticRegressionRidge(X_train, y_train, X_test, y_test, categories=10, print_nums=100)
     # packed_model.load_models()
-    packed_model.run(epochs=300, lr=0.05)
+    packed_model.run(epochs=global_epoch, batch_size=global_batchsize, lr=global_lr)
 
     print(f"Test accuracy: {packed_model.acc_list[-1]}")
