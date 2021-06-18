@@ -134,6 +134,6 @@ if __name__ == "__main__":
     print(X_train.shape)
     packed_model = PackedLogisticRegressionRidge(X_train, y_train, X_test, y_test, categories=10, print_nums=100)
     # packed_model.load_models()
-    packed_model.run(epochs=300, lr=0.01)
+    packed_model.run(epochs=300, lr=0.05)
 
     print(f"Test accuracy: {packed_model.acc_list[-1]}")

@@ -70,14 +70,16 @@ class SoftmaxRegression:
         X = np.insert(X, 0, 1, axis=1)  # (samples, n_features + 1)
 
         n_samples = X_train.shape[0]
-        y_hat = softmax(np.dot(X, self.w)) # (samples, categories)
+        A = np.dot(X, self.w)
+        y_hat = softmax(A)  # (samples, categories)
 
         # print(f"Epoch: {i}, loss: {float(loss)}")
         dw = (1.0 / n_samples) * np.dot(X.T, (y_hat - y))  # (n_features+1, categories)
         self.w -= lr * dw
 
-        loss = (1 / n_samples) * np.sum(
+        loss = (1.0 / n_samples) * np.sum(
             np.power(y - y_hat, 2))  # MSE loss
+        loss = -(1.0 / n_samples) * np.sum(y * np.log(y_hat))
         return loss
 
     def predict(self, X):
@@ -85,7 +87,12 @@ class SoftmaxRegression:
 
         X = np.insert(X, 0, 1, axis=1)
         labels = np.argmax(softmax(np.dot(X, self.w)), axis=1)  # (n_samples, 1)
-        acc = np.mean(np.equal(labels, self.y_test))
+        y_test = self.y_test.flatten()
+        print(labels)
+        print("--------")
+        print(y_test)
+        print("=============")
+        acc = np.mean(np.equal(labels, y_test))
         return acc
 
     def save_loss_acc(self):
