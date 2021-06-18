@@ -37,9 +37,9 @@ class EM:
     def update_w(self, X):
         n_samples = X.shape[0]
         pdfs = np.zeros((n_samples, self.categories))
-        print(self.mu[0])
-        print("=========================")
-        print(self.var[0])
+        # print(self.mu[0])
+        # print("=========================")
+        # print(self.var[0])
         for i in range(self.categories):
             pdfs[:, i] = self.pi[i] * multivariate_normal.pdf(
                 X, self.mu[i, :], np.diag(self.var[i]))  # （samples, 1）
@@ -97,7 +97,7 @@ class EM:
         return labels
 
     def save_loss(self):
-        dirname = "../log"
+        dirname = "./log"
         filename = f"{self.model_type}_" + time.strftime("%Y%m%d-%H%M%S")
         path = os.path.join(dirname, filename)
         f = open(path, 'w')
@@ -117,7 +117,7 @@ class EM:
 
     def save_models(self):
         data = []
-        path = f"../checkpoint/{self.model_type}.pth"
+        path = f"./checkpoint/{self.model_type}.pth"
         for i in range(self.categories):
             data.append({
                 "w": self.w,
@@ -130,7 +130,7 @@ class EM:
         f.close()
 
     def load_models(self):
-        path = f"../checkpoint/{self.model_type}.pth"
+        path = f"./checkpoint/{self.model_type}.pth"
         f = open(path, 'rb')
         data = pickle.load(f)
         self.w = data['w']
@@ -141,7 +141,7 @@ class EM:
 
 
 if __name__ == "__main__":
-    X_train, y_train, X_test, y_test = load_data(path="../data/preprocessed_data.pkl", reload=True)
+    X_train, y_train, X_test, y_test = load_data(path="./data/preprocessed_data_1764.pkl", reload=True)
     # TODO: 把标准差var改成协方差矩阵
     packed_model = EM(X_train, y_train, X_test, categories=10)
     # packed_model.load_models()

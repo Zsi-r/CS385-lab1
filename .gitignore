@@ -9,3 +9,6 @@ checkpoint/
 log/
 data/
 CIFAR100_data/
+cnn_imgs*/
+*.png
+*.jpg

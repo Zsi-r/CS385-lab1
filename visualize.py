@@ -1,7 +1,7 @@
 import csv
 import matplotlib.pyplot as plt
 
-f = open("./log/ridge20210617-174342", 'r')
+f = open("./log/cnn_overfitting_20210618-145410", 'r')
 data = list(csv.reader(f))
 length = len(data)
 
@@ -16,14 +16,14 @@ for i in range(1, length):
 
 fig = plt.figure(1, dpi=128, figsize=(10, 6))
 plt.plot(x, y)
-plt.title("Training Loss in Ridge Regression (epoch=300, lr=0.1)")
+plt.title("Training Loss in CNN (batch size=128, lr=0.01)")
 plt.xlabel("Epoch", fontsize=16)
 plt.ylabel("Loss", fontsize=16)
-plt.savefig('./ridge_loss.png')
+plt.savefig('./cnn2_overfit_loss.png')
 
 fig2 = plt.figure(2, dpi=128, figsize=(10, 6))
 plt.plot(x, z)
-plt.title("Test Accuracy in Ridge Regression (epoch=300, lr=0.1)")
+plt.title("Test Accuracy in CNN (batch size=128, lr=0.01)")
 plt.xlabel("Epoch", fontsize=16)
 plt.ylabel("Accuracy rate", fontsize=16)
-plt.savefig('./ridge_acc.png')
+plt.savefig('./cnn2_overfit_acc.png')
